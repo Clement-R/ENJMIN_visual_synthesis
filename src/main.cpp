@@ -101,25 +101,41 @@ void renderObjects(void)
 	glEnd();
 
 	//A rajouter pour debug : rotation dans le temps
-	glRotatef(NYRenderer::_DeltaTimeCumul * 100, g_slider->Value*10.0f, 1, cos(NYRenderer::_DeltaTimeCumul));
+	// glRotatef(NYRenderer::_DeltaTimeCumul * 100, g_slider->Value*10.0f, 1, cos(NYRenderer::_DeltaTimeCumul));
+
+	// Method 1
+	/*
+	glRotatef(45, 0, 0, 1);
+	glTranslatef(sqrt(8), 0, 0);
+	*/
+
+	// Method 2
+	glTranslatef(2, 2, 0);
+	glRotatef(45, 0, 0, 1);
 
 	//On desactive le back face culling
 	glDisable(GL_CULL_FACE);
 
 	//Pour dessiner des quads
-	glBegin(GL_QUADS);
+	glBegin(GL_TRIANGLES);
 
 	//Face 1
 	glColor3d(1, 0, 0);
-	glVertex3d(1, -1, 1);
 	glVertex3d(1, 1, 1);
-	glVertex3d(1, 1, -1);
+	glVertex3d(1, -1, 1);
 	glVertex3d(1, -1, -1);
 
-	glVertex3d(-1, -1, 1);
+	glVertex3d(1, -1, -1);
+	glVertex3d(1, 1, -1);
+	glVertex3d(1, 1, 1);
+
 	glVertex3d(-1, 1, 1);
-	glVertex3d(-1, 1, -1);
+	glVertex3d(-1, -1, 1);
 	glVertex3d(-1, -1, -1);
+
+	glVertex3d(-1, -1, -1);
+	glVertex3d(-1, 1, -1);
+	glVertex3d(-1, 1, 1);
 
 	//face 2
 	glColor3d(0, 1, 0);
@@ -127,24 +143,37 @@ void renderObjects(void)
 	glVertex3d(1, 1, -1);
 	glVertex3d(-1, 1, -1);
 	glVertex3d(-1, 1, 1);
+
+	glVertex3d(-1, 1, 1);
 	glVertex3d(1, 1, 1);
+	glVertex3d(1, 1, -1);
 
 	glVertex3d(1, -1, -1);
 	glVertex3d(-1, -1, -1);
 	glVertex3d(-1, -1, 1);
-	glVertex3d(1, -1, 1);
 
+	glVertex3d(-1, -1, 1);
+	glVertex3d(1, -1, 1);
+	glVertex3d(1, -1, -1);
+	
 	//face 3
 	glColor3d(0, 0, 1);
+
 	glVertex3d(1, -1, 1);
 	glVertex3d(1, 1, 1);
 	glVertex3d(-1, 1, 1);
-	glVertex3d(-1, -1, 1);
 
+	glVertex3d(-1, 1, 1);
+	glVertex3d(-1, -1, 1);
+	glVertex3d(1, -1, 1);
+	
 	glVertex3d(1, -1, -1);
 	glVertex3d(1, 1, -1);
 	glVertex3d(-1, 1, -1);
+
+	glVertex3d(-1, 1, -1);
 	glVertex3d(-1, -1, -1);
+	glVertex3d(1, -1, -1);
 
 	glEnd();
 }
@@ -209,7 +238,21 @@ void keyboardDownFunction(unsigned char key, int p1, int p2)
 			glutPositionWindow(0,0);
 			g_fullscreen = false;
 		}
-	}	
+	}
+
+	if (key == 'q') {
+		// Left
+		g_renderer->_Camera->move(NYVert3Df(1, 0, 0));
+	} else if(key == 'd') {
+		// Right
+		g_renderer->_Camera->move(NYVert3Df(-1, 0, 0));
+	} else if (key == 's') {
+		// Backward
+		g_renderer->_Camera->move(NYVert3Df(0, -1, 0));
+	} else if (key == 'z') {
+		// Forward
+		g_renderer->_Camera->move(NYVert3Df(0, 1, 0));
+	}
 }
 
 void keyboardUpFunction(unsigned char key, int p1, int p2)
