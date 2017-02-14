@@ -239,20 +239,6 @@ void keyboardDownFunction(unsigned char key, int p1, int p2)
 			g_fullscreen = false;
 		}
 	}
-
-	if (key == 'q') {
-		// Left
-		g_renderer->_Camera->move(NYVert3Df(1, 0, 0));
-	} else if(key == 'd') {
-		// Right
-		g_renderer->_Camera->move(NYVert3Df(-1, 0, 0));
-	} else if (key == 's') {
-		// Backward
-		g_renderer->_Camera->move(NYVert3Df(0, -1, 0));
-	} else if (key == 'z') {
-		// Forward
-		g_renderer->_Camera->move(NYVert3Df(0, 1, 0));
-	}
 }
 
 void keyboardUpFunction(unsigned char key, int p1, int p2)
@@ -261,7 +247,7 @@ void keyboardUpFunction(unsigned char key, int p1, int p2)
 
 void mouseWheelFunction(int wheel, int dir, int x, int y)
 {
-	
+	g_renderer->_Camera->move(NYVert3Df(0, 0, dir));
 }
 
 void mouseFunction(int button, int state, int x, int y)
@@ -283,12 +269,48 @@ void mouseFunction(int button, int state, int x, int y)
 
 void mouseMoveFunction(int x, int y, bool pressed)
 {
-	bool mouseTraite = false;
+	static int lastx = -1;
+	static int lasty = -1;
 
-	mouseTraite = g_screen_manager->mouseCallback(x,y,g_mouse_btn_gui_state,0,0);
-	if(pressed && mouseTraite)
+	if (!pressed)
 	{
-		//Mise a jour des variables liées aux sliders
+		lastx = x;
+		lasty = y;
+	}
+	else
+	{
+		if (lastx == -1 && lasty == -1)
+		{
+			lastx = x;
+			lasty = y;
+		}
+
+		int dx = x - lastx;
+		int dy = y - lasty;
+
+		lastx = x;
+		lasty = y;
+
+		if (GetKeyState(VK_LCONTROL) & 0x80)
+		{
+			NYVert3Df strafe = g_renderer->_Camera->_NormVec;
+			strafe.Z = 0;
+			strafe.normalize();
+			strafe *= (float)-dx / 50.0f;
+
+			NYVert3Df avance = g_renderer->_Camera->_Direction;
+			avance.Z = 0;
+			avance.normalize();
+			avance *= (float)dy / 50.0f;
+
+			g_renderer->_Camera->move(avance + strafe);
+		}
+		else
+		{
+			g_renderer->_Camera->rotate((float)-dx / 300.0f);
+			g_renderer->_Camera->rotateUp((float)-dy / 300.0f);
+		}
+
 	}
 
 }
