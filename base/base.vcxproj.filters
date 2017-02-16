@@ -8,6 +8,9 @@
     <ClCompile Include="..\..\_engine\src\engine\log\log.cpp">
       <Filter>engine\log</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\Exercice 4\chunk.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="engine">
@@ -18,6 +21,12 @@
     </Filter>
     <Filter Include="engine\log">
       <UniqueIdentifier>{0a822301-530a-4ea3-9539-50b080a3d8da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World">
+      <UniqueIdentifier>{75cacdb4-88ef-4a94-81be-097e9bccb27b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physic">
+      <UniqueIdentifier>{d2bd8121-ba60-4e41-8683-955a5a1d20cb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -35,6 +44,21 @@
     </ClInclude>
     <ClInclude Include="..\..\_engine\src\engine\render\camera.h">
       <Filter>engine\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Exercice 4\chunk.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Exercice 4\cube.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Exercice 4\world.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Exercice 4\perlin.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Exercice 7\avatar.h">
+      <Filter>Physic</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

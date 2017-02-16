@@ -11,11 +11,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\Exercice 4\chunk.cpp" />
     <ClCompile Include="..\..\_engine\src\engine\log\log.cpp" />
     <ClCompile Include="..\..\_engine\src\engine\render\renderer.cpp" />
     <ClCompile Include="..\src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Exercice 4\chunk.h" />
+    <ClInclude Include="..\..\..\..\Exercice 4\cube.h" />
+    <ClInclude Include="..\..\..\..\Exercice 4\perlin.h" />
+    <ClInclude Include="..\..\..\..\Exercice 4\world.h" />
+    <ClInclude Include="..\..\..\..\Exercice 7\avatar.h" />
     <ClInclude Include="..\..\_engine\src\engine\log\log.h" />
     <ClInclude Include="..\..\_engine\src\engine\log\log_console.h" />
     <ClInclude Include="..\..\_engine\src\engine\log\log_file.h" />
@@ -66,7 +72,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src;../src/external;../../_engine/src;../../_engine/src/external;../../_engine/src/external/bullet/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\Documents\ENJMIN\Semestre2\EC20X_Synthese_image\Exercice 7;F:\Documents\ENJMIN\Semestre2\EC20X_Synthese_image\Exercice 4;../src;../src/external;../../_engine/src;../../_engine/src/external;../../_engine/src/external/bullet/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LOG_FILE;WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;TETLIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>

@@ -15,6 +15,11 @@
 #include "engine/gui/screen.h"
 #include "engine/gui/screen_manager.h"
 
+//Pour avoir le monde
+#include "world.h"
+
+// Physic system
+#include "avatar.h"
 
 NYRenderer * g_renderer = NULL;
 NYTimer * g_timer = NULL;
@@ -23,6 +28,17 @@ float g_elapsed_fps = 0;
 int g_main_window_id;
 int g_mouse_btn_gui_state = 0;
 bool g_fullscreen = false;
+
+//Soleil
+NYVert3Df g_sun_dir;
+NYColor g_sun_color;
+float g_mn_lever = 6.0f * 60.0f;
+float g_mn_coucher = 19.0f * 60.0f;
+float g_tweak_time = 0;
+bool g_fast_time = false;
+
+//Variable globale
+NYWorld * g_world;
 
 //GUI 
 GUIScreenManager * g_screen_manager = NULL;
@@ -34,6 +50,11 @@ GUIScreen * g_screen_params = NULL;
 GUIScreen * g_screen_jeu = NULL;
 GUISlider * g_slider;
 
+// Soleil
+NYVert3Df posSoleil = NYVert3Df(0, 0, 7);
+
+// Avatar
+NYAvatar * avatar;
 
 //////////////////////////////////////////////////////////////////////////
 // GESTION APPLICATION
@@ -41,6 +62,9 @@ GUISlider * g_slider;
 void update(void)
 {
 	float elapsed = g_timer->getElapsedSeconds(true);
+	//Tweak time
+	if (g_fast_time)
+		g_tweak_time += elapsed * 120.0f;
 
 	static float g_eval_elapsed = 0;
 
@@ -53,6 +77,8 @@ void update(void)
 		g_elapsed_fps -= 1.0f;
 		g_nb_frames = 0;
 	}
+
+	avatar->update(elapsed);
 
 	//Rendu
 	g_renderer->render(elapsed);
@@ -68,7 +94,7 @@ void renderObjects(void)
 {
 	//Rendu des axes
 	glDisable(GL_LIGHTING);
-
+	/*
 	glBegin(GL_LINES);
 	glColor3d(1,0,0);
 	glVertex3d(0,0,0);
@@ -80,118 +106,164 @@ void renderObjects(void)
 	glVertex3d(0,0,0);
 	glVertex3d(0,0,10000);
 	glEnd();
-	
-	//Dessin des axes : on dessine des lignes
-	glBegin(GL_LINES);
-
-	//Premiere primitive : axe des x
-	glColor3d(1, 0, 0);
-	glVertex3d(0, 0, 0);
-	glVertex3d(10000, 0, 0);
-
-	//Deuxieme primitive : axe des y
-	glColor3d(0, 1, 0);
-	glVertex3d(0, 0, 0);
-	glVertex3d(0, 10000, 0);
-
-	//Troisieme primitive : axe des z
-	glColor3d(0, 0, 1);
-	glVertex3d(0, 0, 0);
-	glVertex3d(0, 0, 10000);
-	glEnd();
-
-	//A rajouter pour debug : rotation dans le temps
-	// glRotatef(NYRenderer::_DeltaTimeCumul * 100, g_slider->Value*10.0f, 1, cos(NYRenderer::_DeltaTimeCumul));
-
-	// Method 1
-	/*
-	glRotatef(45, 0, 0, 1);
-	glTranslatef(sqrt(8), 0, 0);
 	*/
+	glEnable(GL_LIGHTING);
 
-	// Method 2
-	glTranslatef(2, 2, 0);
-	glRotatef(45, 0, 0, 1);
+	//Active la lumière
+	glEnable(GL_LIGHTING);
+	glShadeModel(GL_SMOOTH);
 
-	//On desactive le back face culling
-	glDisable(GL_CULL_FACE);
+	//Rendu du soleil
 
-	//Pour dessiner des quads
-	glBegin(GL_TRIANGLES);
+	//On sauve la matrice
+	glPushMatrix();
 
-	//Face 1
-	glColor3d(1, 0, 0);
-	glVertex3d(1, 1, 1);
-	glVertex3d(1, -1, 1);
-	glVertex3d(1, -1, -1);
+	//Position du soleil
+	glTranslatef(g_renderer->_Camera->_Position.X, g_renderer->_Camera->_Position.Y, g_renderer->_Camera->_Position.Z);
+	glTranslatef(g_sun_dir.X * 1000, g_sun_dir.Y * 1000, g_sun_dir.Z * 1000);
 
-	glVertex3d(1, -1, -1);
-	glVertex3d(1, 1, -1);
-	glVertex3d(1, 1, 1);
+	//Material du soleil : de l'emissive
+	GLfloat sunEmissionMaterial[] = { 0.0, 0.0, 0.0,1.0 };
+	sunEmissionMaterial[0] = g_sun_color.R;
+	sunEmissionMaterial[1] = g_sun_color.V;
+	sunEmissionMaterial[2] = g_sun_color.B;
+	glMaterialfv(GL_FRONT, GL_EMISSION, sunEmissionMaterial);
 
-	glVertex3d(-1, 1, 1);
-	glVertex3d(-1, -1, 1);
-	glVertex3d(-1, -1, -1);
+	//On dessine un cube pour le soleil
+	glutSolidCube(50.0f);
 
-	glVertex3d(-1, -1, -1);
-	glVertex3d(-1, 1, -1);
-	glVertex3d(-1, 1, 1);
+	//On reset le material emissive pour la suite
+	sunEmissionMaterial[0] = 0.0f;
+	sunEmissionMaterial[1] = 0.0f;
+	sunEmissionMaterial[2] = 0.0f;
+	glMaterialfv(GL_FRONT, GL_EMISSION, sunEmissionMaterial);
 
-	//face 2
-	glColor3d(0, 1, 0);
+	//Reset de la matrice
+	glPopMatrix();
 
-	glVertex3d(1, 1, -1);
-	glVertex3d(-1, 1, -1);
-	glVertex3d(-1, 1, 1);
+	glPushMatrix();
+	g_world->render_world_old_school();
+	//g_world->render_world_vbo();
+	glPopMatrix();
 
-	glVertex3d(-1, 1, 1);
-	glVertex3d(1, 1, 1);
-	glVertex3d(1, 1, -1);
-
-	glVertex3d(1, -1, -1);
-	glVertex3d(-1, -1, -1);
-	glVertex3d(-1, -1, 1);
-
-	glVertex3d(-1, -1, 1);
-	glVertex3d(1, -1, 1);
-	glVertex3d(1, -1, -1);
+	glPushMatrix();
 	
-	//face 3
-	glColor3d(0, 0, 1);
-
-	glVertex3d(1, -1, 1);
-	glVertex3d(1, 1, 1);
-	glVertex3d(-1, 1, 1);
-
-	glVertex3d(-1, 1, 1);
-	glVertex3d(-1, -1, 1);
-	glVertex3d(1, -1, 1);
-	
-	glVertex3d(1, -1, -1);
-	glVertex3d(1, 1, -1);
-	glVertex3d(-1, 1, -1);
-
-	glVertex3d(-1, 1, -1);
-	glVertex3d(-1, -1, -1);
-	glVertex3d(1, -1, -1);
-
-	glEnd();
+	avatar->render();
+	glPopMatrix();
 }
 
-void setLights(void)
+bool getSunDirection(NYVert3Df & sun, float mnLever, float mnCoucher)
+{
+	bool nuit = false;
+
+	SYSTEMTIME t;
+	GetLocalTime(&t);
+
+	//On borne le tweak time à une journée (cyclique)
+	while (g_tweak_time > 24 * 60)
+		g_tweak_time -= 24 * 60;
+
+	//Temps écoulé depuis le début de la journée
+	float fTime = (float)(t.wHour * 60 + t.wMinute);
+	fTime += g_tweak_time;
+	while (fTime > 24 * 60)
+		fTime -= 24 * 60;
+
+	//Si c'est la nuit
+	if (fTime < mnLever || fTime > mnCoucher)
+	{
+		nuit = true;
+		if (fTime < mnLever)
+			fTime += 24 * 60;
+		fTime -= mnCoucher;
+		fTime /= (mnLever + 24 * 60 - mnCoucher);
+		fTime *= M_PI;
+	}
+	else
+	{
+		//c'est le jour
+		nuit = false;
+		fTime -= mnLever;
+		fTime /= (mnCoucher - mnLever);
+		fTime *= M_PI;
+	}
+
+	//Position en fonction de la progression dans la journée
+	sun.X = cos(fTime);
+	sun.Y = 0.2f;
+	sun.Z = sin(fTime);
+	sun.normalize();
+
+	return nuit;
+}
+
+void setLightsBasedOnDayTime(void)
 {
 	//On active la light 0
 	glEnable(GL_LIGHT0);
 
+	//On recup la direciton du soleil
+	bool nuit = getSunDirection(g_sun_dir, g_mn_lever, g_mn_coucher);
+
 	//On définit une lumière directionelle (un soleil)
-	float direction[4] = {0,0,1,0}; ///w = 0 donc elle est a l'infini
-	glLightfv(GL_LIGHT0, GL_POSITION, direction );
-	float color[4] = {0.5f,0.5f,0.5f};
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, color );
-	float color2[4] = {0.3f,0.3f,0.3f};
-	glLightfv(GL_LIGHT0, GL_AMBIENT, color2 );
-	float color3[4] = {0.3f,0.3f,0.3f};
-	glLightfv(GL_LIGHT0, GL_SPECULAR, color3 );
+	float position[4] = { g_sun_dir.X,g_sun_dir.Y,g_sun_dir.Z,0 }; ///w = 0 donc c'est une position a l'infini
+	glLightfv(GL_LIGHT0, GL_POSITION, position);
+
+	//Pendant la journée
+	if (!nuit)
+	{
+		//On definit la couleur
+		NYColor sunColor(1, 1, 0.8, 1);
+		NYColor skyColor(0, 181.f / 255.f, 221.f / 255.f, 1);
+		NYColor downColor(0.9, 0.5, 0.1, 1);
+		sunColor = sunColor.interpolate(downColor, (abs(g_sun_dir.X)));
+		skyColor = skyColor.interpolate(downColor, (abs(g_sun_dir.X)));
+
+		g_renderer->setBackgroundColor(skyColor);
+
+		float color[4] = { sunColor.R,sunColor.V,sunColor.B,1 };
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, color);
+		float color2[4] = { sunColor.R,sunColor.V,sunColor.B,1 };
+		glLightfv(GL_LIGHT0, GL_AMBIENT, color2);
+		g_sun_color = sunColor;
+	}
+	else
+	{
+		//La nuit : lune blanche et ciel noir
+		NYColor sunColor(1, 1, 1, 1);
+		NYColor skyColor(0, 0, 0, 1);
+		g_renderer->setBackgroundColor(skyColor);
+
+		float color[4] = { sunColor.R / 3.f,sunColor.V / 3.f,sunColor.B / 3.f,1 };
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, color);
+		float color2[4] = { sunColor.R / 7.f,sunColor.V / 7.f,sunColor.B / 7.f,1 };
+		glLightfv(GL_LIGHT0, GL_AMBIENT, color2);
+		g_sun_color = sunColor;
+	}
+}
+
+void setLights(void)
+{
+	//On active l'illumination 
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+
+	//On définit une lumière 
+	float position[4] = { posSoleil.X, posSoleil.Y, posSoleil.Z, 0 }; // w = 1 donc c'est une point light (w=0 -> directionelle, point à l'infini)
+	glLightfv(GL_LIGHT0, GL_POSITION, position);
+
+	float diffuse[4] = { 0.5f,0.5f,0.5f };
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+
+	float specular[4] = { 0.5f,0.5f,0.5f };
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
+
+	float ambient[4] = { 0.3f,0.3f,0.3f };
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+
+	//Changement de la couleur de fond
+	NYColor skyColor(0, 181.f / 255.f, 221.f / 255.f, 1);
+	g_renderer->setBackgroundColor(skyColor);
 }
 
 void resizeFunction(int width, int height)
@@ -239,10 +311,47 @@ void keyboardDownFunction(unsigned char key, int p1, int p2)
 			g_fullscreen = false;
 		}
 	}
+
+	if (key == 'g') {
+		g_fast_time = !g_fast_time;
+	}
+
+	if (key == 'z') {
+		avatar->avance = true;
+	} else if (key == 's') {
+		avatar->recule = true;
+	}
+
+	if (key == 'q') {
+		avatar->gauche = true;
+	} else if (key == 'd') {
+		avatar->droite = true;
+	}
+
+	if (key == VK_SPACE) {
+		avatar->Jump = true;
+	}
 }
 
 void keyboardUpFunction(unsigned char key, int p1, int p2)
 {
+	if (key == 'z') {
+		avatar->avance = false;
+	}
+	else if (key == 's') {
+		avatar->recule = false;
+	}
+
+	if (key == 'q') {
+		avatar->gauche = false;
+	}
+	else if (key == 'd') {
+		avatar->droite = false;
+	}
+
+	if (key == VK_SPACE) {
+		avatar->Jump = true;
+	}
 }
 
 void mouseWheelFunction(int wheel, int dir, int x, int y)
@@ -418,7 +527,7 @@ int main(int argc, char* argv[])
 	g_renderer = NYRenderer::getInstance();
 	g_renderer->setRenderObjectFun(renderObjects);
 	g_renderer->setRender2DFun(render2d);
-	g_renderer->setLightsFun(setLights);
+	g_renderer->setLightsFun(setLightsBasedOnDayTime);
 	g_renderer->setBackgroundColor(NYColor());
 	g_renderer->initialise();
 
@@ -494,9 +603,15 @@ int main(int argc, char* argv[])
 
 	//Init Timer
 	g_timer = new NYTimer();
+
+	g_world = new NYWorld();
+	g_world->_FacteurGeneration = 5;
+	g_world->init_world();
 	
 	//On start
 	g_timer->start();
+
+	avatar = new NYAvatar(g_renderer->_Camera, g_world);
 
 	glutMainLoop(); 
 
