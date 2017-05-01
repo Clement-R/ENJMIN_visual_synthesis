@@ -56,6 +56,8 @@ NYVert3Df posSoleil = NYVert3Df(0, 0, 7);
 // Avatar
 NYAvatar * avatar;
 
+GLuint g_program;
+
 //////////////////////////////////////////////////////////////////////////
 // GESTION APPLICATION
 //////////////////////////////////////////////////////////////////////////
@@ -94,7 +96,6 @@ void renderObjects(void)
 {
 	//Rendu des axes
 	glDisable(GL_LIGHTING);
-	/*
 	glBegin(GL_LINES);
 	glColor3d(1,0,0);
 	glVertex3d(0,0,0);
@@ -106,7 +107,6 @@ void renderObjects(void)
 	glVertex3d(0,0,0);
 	glVertex3d(0,0,10000);
 	glEnd();
-	*/
 	glEnable(GL_LIGHTING);
 
 	//Active la lumière
@@ -141,13 +141,28 @@ void renderObjects(void)
 	//Reset de la matrice
 	glPopMatrix();
 
-	glPushMatrix();
-	g_world->render_world_old_school();
-	//g_world->render_world_vbo();
-	glPopMatrix();
+	// Shaders et rendu du monde
+	glUseProgram(g_program);
 
-	glPushMatrix();
+	GLuint elap = glGetUniformLocation(g_program, "elapsed");
+	glUniform1f(elap, NYRenderer::_DeltaTimeCumul);
+
+	GLuint amb = glGetUniformLocation(g_program, "ambientLevel");
+	glUniform1f(amb, 0.4);
+
+	GLuint invView = glGetUniformLocation(g_program, "invertView");
+	glUniformMatrix4fv(invView, 1, true, g_renderer->_Camera->_InvertViewMatrix.Mat.t);
+
+	NYFloatMatrix mView = g_renderer->_Camera->_InvertViewMatrix;
+	mView.invert();
+	GLuint view = glGetUniformLocation(g_program, "view");
+	glUniformMatrix4fv(view, 1, true, mView.Mat.t);
 	
+	glPushMatrix();
+	g_world->render_world_vbo();
+	glPopMatrix();
+	
+	glPushMatrix();
 	avatar->render();
 	glPopMatrix();
 }
@@ -381,53 +396,32 @@ void mouseMoveFunction(int x, int y, bool pressed)
 	static int lastx = -1;
 	static int lasty = -1;
 
-	if (!pressed)
+	if (lastx == -1 && lasty == -1)
 	{
 		lastx = x;
 		lasty = y;
 	}
-	else
-	{
-		if (lastx == -1 && lasty == -1)
-		{
-			lastx = x;
-			lasty = y;
-		}
 
-		int dx = x - lastx;
-		int dy = y - lasty;
+	int dx = x - lastx;
+	int dy = y - lasty;
 
-		lastx = x;
-		lasty = y;
+	lastx = x;
+	lasty = y;
 
-		if (GetKeyState(VK_LCONTROL) & 0x80)
-		{
-			NYVert3Df strafe = g_renderer->_Camera->_NormVec;
-			strafe.Z = 0;
-			strafe.normalize();
-			strafe *= (float)-dx / 50.0f;
+	g_renderer->_Camera->rotate((float)-dx / 300.0f);
+	g_renderer->_Camera->rotateUp((float)-dy / 300.0f);
 
-			NYVert3Df avance = g_renderer->_Camera->_Direction;
-			avance.Z = 0;
-			avance.normalize();
-			avance *= (float)dy / 50.0f;
-
-			g_renderer->_Camera->move(avance + strafe);
-		}
-		else
-		{
-			g_renderer->_Camera->rotate((float)-dx / 300.0f);
-			g_renderer->_Camera->rotateUp((float)-dy / 300.0f);
-		}
-
+	/* Warp pointer to the middle of the screen when it's almost going offscreen */
+	if (lastx <= 10 || lastx >= glutGet(GLUT_WINDOW_WIDTH) - 10) {
+		glutWarpPointer(glutGet(GLUT_WINDOW_WIDTH) / 2, glutGet(GLUT_WINDOW_HEIGHT) / 2);
 	}
-
 }
 
 void mouseMoveActiveFunction(int x, int y)
 {
 	mouseMoveFunction(x,y,true);
 }
+
 void mouseMovePassiveFunction(int x, int y)
 {
 	mouseMoveFunction(x,y,false);
@@ -466,7 +460,7 @@ int main(int argc, char* argv[])
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_MULTISAMPLE );
 
 	glEnable(GL_MULTISAMPLE);
-
+	
 	Log::log(Log::ENGINE_INFO, (toString(argc) + " arguments en ligne de commande.").c_str());	
 	bool gameMode = true;
 	for(int i=0;i<argc;i++)
@@ -512,6 +506,8 @@ int main(int argc, char* argv[])
 	//Affichage des capacités du système
 	Log::log(Log::ENGINE_INFO,("OpenGL Version : " + std::string((char*)glGetString(GL_VERSION))).c_str());
 
+	glutSetCursor(GLUT_CURSOR_NONE);
+
 	glutDisplayFunc(update);
 	glutReshapeFunc(resizeFunction);
 	glutKeyboardFunc(keyboardDownFunction);
@@ -529,7 +525,18 @@ int main(int argc, char* argv[])
 	g_renderer->setRender2DFun(render2d);
 	g_renderer->setLightsFun(setLightsBasedOnDayTime);
 	g_renderer->setBackgroundColor(NYColor());
-	g_renderer->initialise();
+	
+	
+	
+
+	// Shaders
+	//Active le post process (chargera le shader de post process "postprocess/pshader.glsl")
+	// pshader : post-process shader
+	g_renderer->initialise(true);
+
+	// vsbase : vertex shader
+	// psbase : fragment shader
+	g_program = g_renderer->createProgram("shaders/psbase.glsl", "shaders/vsbase.glsl");
 
 	//On applique la config du renderer
 	glViewport(0, 0, g_renderer->_ScreenWidth, g_renderer->_ScreenHeight);

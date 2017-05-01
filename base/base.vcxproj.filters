@@ -28,6 +28,9 @@
     <Filter Include="Physic">
       <UniqueIdentifier>{d2bd8121-ba60-4e41-8683-955a5a1d20cb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{74bfdf4e-0f0a-447f-a347-2abb63799afd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\_engine\src\engine\render\renderer.h">
@@ -60,5 +63,22 @@
     <ClInclude Include="..\..\..\..\Exercice 7\avatar.h">
       <Filter>Physic</Filter>
     </ClInclude>
+    <ClInclude Include="my_physics.h">
+      <Filter>Physic</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\run\shaders\psbase.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\run\shaders\vsbase.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\run\shaders\postprocess\pshader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\run\shaders\postprocess\pshader - grayscale.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
